@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Services;
+
+use Goutte\Client;
+use Illuminate\Support\Facades\Log;
+
+class YandexReviewsServiceWithGoutte
+{
+    protected $client;
+
+    public function __construct()
+    {
+        $this->client = new Client();
+    }
+
+    public function fetchReviews($url)
+    {
+        try {
+            Log::info("Fetching reviews with Goutte from URL: {$url}");
+            
+            $crawler = $this->client->request('GET', $url);
+            
+            $reviews = [];
+            
+            $crawler->filter('[class*="review"], [class*="business-review"]')->each(function ($node) use (&$reviews) {
+                try {
+                    $text = '';
+                    $textNode = $node->filter('[class*="text"], [class*="comment"]')->first();
+                    if ($textNode->count() > 0) {
+                        $text = trim($textNode->text());
+                    } else {
+                        $text = trim($node->text());
+                    }
+                    
+                    $rating = 5;
+                    $ratingNode = $node->filter('[class*="rating"], [class*="star"]')->first();
+                    if ($ratingNode->count() > 0) {
+                        $ratingText = $ratingNode->attr('data-rating') ?? $ratingNode->text();
+                        if (preg_match('/(\d+)/', $ratingText, $match)) {
+                            $rating = (int)$match[1];
+                        }
+                    }
+                    
+                    $date = now();
+                    $dateNode = $node->filter('time, [class*="date"]')->first();
+                    if ($dateNode->count() > 0) {
+                        $dateText = $dateNode->attr('datetime') ?? $dateNode->text();
+                        $parsed = strtotime($dateText);
+                        if ($parsed !== false) {
+                            $date = date('Y-m-d H:i:s', $parsed);
+                        }
+                    }
+                    
+                    $authorName = 'Аноним';
+                    $authorNode = $node->filter('[class*="author"], [class*="reviewer"]')->first();
+                    if ($authorNode->count() > 0) {
+                        $authorName = trim($authorNode->text());
+                    }
+                    
+                    if (!empty($text) && strlen($text) >= 10) {
+                        $reviews[] = [
+                            'external_id' => md5($text . $date . $authorName),
+                            'date' => $date,
+                            'branch' => 'Филиал 1',
+                            'reviewer_name' => $authorName,
+                            'reviewer_phone' => null,
+                            'rating' => $rating,
+                            'text' => $text,
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error parsing review node: ' . $e->getMessage());
+                }
+            });
+            
+            Log::info("Goutte found " . count($reviews) . " reviews");
+            return $reviews;
+        } catch (\Exception $e) {
+            Log::error('Goutte fetch error: ' . $e->getMessage());
+            throw new \Exception('Не удалось получить отзывы: ' . $e->getMessage());
+        }
+    }
+}

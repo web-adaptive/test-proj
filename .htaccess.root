@@ -1,0 +1,25 @@
+# Защита .env файла
+<Files .env>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Защита других чувствительных файлов
+<FilesMatch "^(composer\.(json|lock)|package(-lock)?\.json|\.gitignore|\.env\.example)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Запрет доступа к папкам
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Запрет доступа к скрытым файлам и папкам
+    RewriteRule ^\. - [F,L]
+    
+    # Запрет доступа к vendor, node_modules и другим системным папкам
+    RewriteRule ^(vendor|node_modules|storage|bootstrap|database|tests|docker)/ - [F,L]
+</IfModule>
+
+# Защита от просмотра директорий
+Options -Indexes

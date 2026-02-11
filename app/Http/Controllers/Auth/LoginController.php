@@ -11,6 +11,9 @@ class LoginController extends Controller
 {
     public function showLoginForm()
     {
+        if (Auth::check()) {
+            return redirect()->intended('/');
+        }
         return Inertia::render('Auth/Login');
     }
 

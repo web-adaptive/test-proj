@@ -16,7 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
         $middleware->redirectGuestsTo(fn () => route('login'));
+        // За Nginx на VPS: без этого редиректы и URL могут уходить в цикл
+        $middleware->trustProxies(at: ['127.0.0.1', '::1']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
     })->create();

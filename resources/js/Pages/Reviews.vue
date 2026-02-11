@@ -113,7 +113,7 @@
                     <div class="bg-white rounded-lg shadow p-6 sticky top-4">
                         <div class="text-center">
                             <div class="text-4xl font-bold text-gray-900 mb-2">
-                                {{ averageRating }}
+                                {{ displayRating.toFixed(1) }}
                             </div>
                             <div class="flex justify-center mb-3">
                                 <div class="flex">
@@ -121,7 +121,7 @@
                                         v-for="i in 5"
                                         :key="i"
                                         class="w-6 h-6"
-                                        :class="i <= Math.floor(averageRating) ? 'text-yellow-400' : (i === Math.ceil(averageRating) && averageRating % 1 >= 0.5 ? 'text-yellow-400' : 'text-gray-300')"
+                                        :class="i <= Math.floor(displayRating) ? 'text-yellow-400' : (i === Math.ceil(displayRating) && displayRating % 1 >= 0.5 ? 'text-yellow-400' : 'text-gray-300')"
                                         fill="currentColor"
                                         viewBox="0 0 20 20"
                                     >
@@ -143,7 +143,7 @@
 <script setup>
 import Layout from '../Layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
     reviews: Object,
@@ -153,6 +153,11 @@ const props = defineProps({
 });
 
 const syncing = ref(false);
+
+// Ограничиваем отображаемый рейтинг максимумом 5.0
+const displayRating = computed(() => {
+    return Math.min(props.averageRating || 0, 5.0);
+});
 
 const formatDate = (date) => {
     const d = new Date(date);

@@ -73,7 +73,7 @@ class ReviewsController extends Controller
                         'branch' => $reviewData['branch'] ?? 'Филиал 1',
                         'reviewer_name' => !empty($reviewData['reviewer_name']) ? $reviewData['reviewer_name'] : 'Аноним',
                         'reviewer_phone' => $reviewData['reviewer_phone'] ?? null,
-                        'rating' => $reviewData['rating'] ?? 5,
+                        'rating' => min(max($reviewData['rating'] ?? 5, 1), 5), // Ограничиваем рейтинг от 1 до 5
                         'text' => trim($reviewData['text']),
                     ]
                 );
